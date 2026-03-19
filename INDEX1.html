@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>עבדים היינו במצרים - משחק חיפוש</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;600;700;800&family=Suez+One&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#E8A838;--gold-light:#F5D48A;--sand:#F5E6C8;--brown:#8B5E3C;--brown-dark:#5C3A1E;--nile:#3A8CB5;--nile-light:#6BB8D9;--papyrus:#F7F0DD;--green:#4CAF50}
+body{font-family:'Rubik',sans-serif;background:linear-gradient(135deg,var(--sand) 0%,var(--gold-light) 50%,var(--sand) 100%);height:100vh;height:100dvh;overflow:hidden;direction:rtl;display:flex;align-items:center;justify-content:center}
+.game-wrapper{display:flex;flex-direction:column;padding:8px 10px;margin:0 auto;height:100vh;height:100dvh;overflow:hidden;width:min(96vw,1400px);max-width:1400px}
+.game-header{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:nowrap;padding:6px 12px;background:linear-gradient(135deg,var(--brown-dark),var(--brown));border-radius:12px;margin-bottom:4px;box-shadow:0 4px 15px rgba(0,0,0,0.2);width:100%;flex-shrink:0}
+.game-title{font-family:'Suez One',serif;color:var(--gold);font-size:clamp(1rem,2.5vw,1.3rem)}
+.header-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.progress-pill{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.1);padding:5px 12px;border-radius:20px}
+.progress-bar{width:80px;height:10px;background:rgba(255,255,255,0.15);border-radius:5px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:5px;transition:width 0.5s ease;width:0%}
+.progress-text{color:var(--gold-light);font-weight:700;font-size:0.85rem;white-space:nowrap}
+.ctrl-btn{border:none;padding:6px 14px;font-size:0.85rem;font-family:'Rubik',sans-serif;font-weight:600;border-radius:18px;cursor:pointer;transition:all 0.3s;color:white}
+.ctrl-btn:hover{transform:scale(1.05)}
+.hint-btn{background:linear-gradient(135deg,var(--nile),var(--nile-light))}
+.hint-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.mag-btn{background:linear-gradient(135deg,var(--brown),#6B4226)}
+.mag-btn.active{background:linear-gradient(135deg,var(--gold),#D4922A);box-shadow:0 0 10px rgba(232,168,56,0.5)}
+.info-btn{background:linear-gradient(135deg,#7D5BA6,#9B7BC0)}
+.start-overlay{display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:300;align-items:center;justify-content:center;padding:18px}
+.start-overlay.hidden{display:none}
+.start-card{background:linear-gradient(135deg,var(--papyrus),white);border-radius:28px;padding:28px;max-width:920px;width:min(94vw,920px);max-height:90vh;overflow:auto;border:4px solid var(--gold);box-shadow:0 22px 60px rgba(0,0,0,0.35)}
+.start-title{font-family:'Suez One',serif;font-size:clamp(1.4rem,3.2vw,2rem);color:var(--brown-dark);margin-bottom:10px;text-align:center}
+.start-subtitle{font-size:1.05rem;color:var(--brown);line-height:1.7;text-align:center;margin-bottom:18px}
+.intro-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.instructions-card{background:#fff;border:2px solid var(--gold-light);border-radius:20px;padding:16px;display:flex;gap:14px;align-items:flex-start;box-shadow:0 6px 16px rgba(0,0,0,0.06)}
+.card-icon{width:54px;height:54px;min-width:54px;border-radius:16px;background:linear-gradient(135deg,var(--gold),#D4922A);display:flex;align-items:center;justify-content:center;font-size:1.7rem;color:white;box-shadow:0 6px 14px rgba(232,168,56,0.25)}
+.card-text h3{font-size:1.02rem;color:var(--brown-dark);margin-bottom:4px}
+.card-text p{margin:0;color:var(--brown);line-height:1.6;font-size:0.98rem}
+.button-guide{background:#fff8e8;border:2px dashed var(--gold);border-radius:20px;padding:16px 18px;margin-bottom:12px}
+.button-guide h3{font-size:1rem;color:var(--brown-dark);margin-bottom:10px;text-align:center}
+.button-list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.button-item{background:white;border-radius:16px;padding:12px;text-align:center;border:1.5px solid #ead9b7}
+.button-item strong{display:block;font-size:1.1rem;color:var(--brown-dark);margin-bottom:4px}
+.button-item span{display:block;color:var(--brown);line-height:1.5;font-size:0.94rem}
+.voice-controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:6px 0 16px}
+.voice-btn{border:none;border-radius:999px;padding:10px 18px;font-family:'Rubik',sans-serif;font-size:0.98rem;font-weight:700;cursor:pointer;transition:all .25s;background:#efe7d2;color:var(--brown-dark)}
+.voice-btn.active{background:linear-gradient(135deg,var(--nile),var(--nile-light));color:white}
+.helper-note{background:#f9f2dd;border-radius:16px;padding:12px 14px;text-align:center;color:var(--brown);line-height:1.6;margin-bottom:12px}
+.credit-box{background:#fff;border:2px solid #ead9b7;border-radius:20px;padding:16px 18px;margin:0 0 12px;box-shadow:0 6px 16px rgba(0,0,0,0.05)}
+.credit-box h3{font-size:1rem;color:var(--brown-dark);margin-bottom:8px;text-align:center}
+.credit-box p{margin:0 0 8px;color:var(--brown);line-height:1.75;font-size:0.96rem}
+.credit-box p:last-child{margin-bottom:0}
+.credit-box strong{color:var(--brown-dark)}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.start-btn,.secondary-btn{border:none;border-radius:999px;padding:12px 26px;font-family:'Rubik',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .25s}
+.start-btn{background:linear-gradient(135deg,var(--gold),#D4922A);color:white}
+.secondary-btn{background:#EFE7D2;color:var(--brown-dark)}
+.start-btn:hover,.secondary-btn:hover{transform:scale(1.04)}
+.instruction-bar{width:100%;background:var(--papyrus);border:2.5px solid var(--gold);border-radius:12px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:10px;box-shadow:0 3px 12px rgba(0,0,0,0.08);min-height:52px;transition:all 0.3s;flex-shrink:0}
+.play-audio-btn{width:38px;height:38px;min-width:38px;border-radius:50%;border:2.5px solid var(--gold);background:linear-gradient(135deg,var(--gold),#D4922A);color:white;font-size:1.1rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.3s;box-shadow:0 3px 10px rgba(232,168,56,0.3)}
+.play-audio-btn:hover{transform:scale(1.1)}
+.play-audio-btn.playing{animation:audioPlaying 1s ease-in-out infinite}
+@keyframes audioPlaying{0%,100%{box-shadow:0 0 0 0 rgba(232,168,56,0.4)}50%{box-shadow:0 0 0 10px rgba(232,168,56,0)}}
+.instruction-text{font-size:clamp(0.82rem,1.5vw,1rem);font-weight:700;color:var(--brown-dark);line-height:1.35;white-space:normal;display:block}
+.instruction-bar.success{border-color:var(--green);background:#E8F5E9}
+.instruction-bar.success .instruction-text{color:var(--green)}
+.image-container{position:relative;width:100%;flex:1;min-height:0;border-radius:12px;overflow:hidden;box-shadow:0 8px 30px rgba(0,0,0,0.25);border:3px solid var(--gold);cursor:crosshair}
+.image-container img{display:block;width:100%;height:100%;object-fit:contain}
+.found-marker{position:absolute;pointer-events:none;z-index:12;display:flex;align-items:center;justify-content:center}
+.found-marker .check-circle{width:40px;height:40px;background:rgba(76,175,80,0.8);border:3px solid var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:1.4rem;font-weight:800;animation:popIn 0.4s ease}
+.fact-bubble-marker{position:absolute;width:3vmin;height:3vmin;background:transparent;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:15;transition:all 0.3s;border:none}
+.fact-bubble-marker:hover{animation:hotspot-pulse 1.5s ease-in-out infinite;background:rgba(255,255,255,0.2);box-shadow:0 0 10px rgba(255,255,255,0.3)}
+@keyframes hotspot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.3)}50%{box-shadow:0 0 0 1.5vmin rgba(255,255,255,0)}}
+@keyframes hotspot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,0.3)}50%{box-shadow:0 0 0 12px rgba(255,255,255,0)}}
+.hint-glow{position:absolute;border-radius:50%;pointer-events:none;z-index:11;animation:hintPulse 1.2s ease-in-out 4}
+.magnifier{display:none;position:absolute;width:150px;height:150px;border-radius:50%;border:4px solid var(--gold);box-shadow:0 0 0 3px var(--brown-dark),0 8px 25px rgba(0,0,0,0.4),inset 0 0 15px rgba(255,255,255,0.1);pointer-events:none;z-index:50;overflow:hidden;background-repeat:no-repeat}
+.magnifier.visible{display:block}
+.magnifier::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,0.25) 0%,transparent 60%);pointer-events:none}
+.magnifier::before{content:'';position:absolute;bottom:-16px;right:-10px;width:12px;height:32px;background:linear-gradient(135deg,var(--brown),var(--brown-dark));border-radius:0 0 6px 6px;transform:rotate(-45deg);transform-origin:top center;box-shadow:2px 2px 5px rgba(0,0,0,0.3)}
+.image-container.mag-active{cursor:none}
+.wrong-flash{position:absolute;width:40px;height:40px;border-radius:50%;border:3px solid #D94E4E;background:rgba(217,78,78,0.2);pointer-events:none;z-index:20;animation:wrongPop 0.6s ease forwards}
+@keyframes wrongPop{0%{transform:scale(0.5);opacity:1}100%{transform:scale(1.5);opacity:0}}
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center;animation:fadeIn 0.3s ease}
+.popup-overlay.active{display:flex}
+.popup{background:white;border-radius:24px;padding:28px;max-width:400px;width:90vw;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);border:3px solid var(--nile);animation:popIn 0.4s ease}
+.popup-emoji{font-size:3rem;margin-bottom:8px}
+.popup-title{font-family:'Suez One',serif;font-size:1.5rem;color:var(--nile);margin-bottom:8px}
+.popup-desc{font-size:1rem;color:var(--brown);line-height:1.6;margin-bottom:15px}
+.fact-link{display:inline-block;padding:8px 20px;background:linear-gradient(135deg,var(--nile),var(--nile-light));color:white;text-decoration:none;border-radius:25px;font-weight:600;transition:all 0.3s}
+.fact-link:hover{transform:scale(1.05)}
+.popup-close{display:inline-block;margin-top:12px;background:var(--gold);color:white;border:none;padding:8px 24px;font-size:1rem;font-family:'Rubik',sans-serif;font-weight:700;border-radius:25px;cursor:pointer;transition:all 0.3s}
+.popup-close:hover{background:#D4922A}
+.fact-audio-btn{display:inline-block;margin-top:10px;background:var(--nile);color:white;border:none;padding:8px 20px;font-size:1rem;font-family:'Rubik',sans-serif;font-weight:700;border-radius:25px;cursor:pointer;transition:all 0.3s}
+.fact-audio-btn:hover{filter:brightness(1.07)}
+.fact-audio-btn.playing{animation:pulseBtn 1s infinite}
+.win-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center}
+.win-overlay.active{display:flex}
+.win-card{background:linear-gradient(135deg,var(--papyrus),white);border-radius:30px;padding:35px;text-align:center;max-width:420px;width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.3);border:4px solid var(--gold);animation:popIn 0.5s ease}
+
+.rotate-overlay{display:flex;position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:400;align-items:center;justify-content:center;padding:20px}
+.rotate-overlay.hidden{display:none}
+.rotate-card{background:linear-gradient(135deg,var(--papyrus),white);border-radius:28px;padding:28px 24px;max-width:420px;width:min(90vw,420px);text-align:center;border:4px solid var(--gold);box-shadow:0 22px 60px rgba(0,0,0,0.35)}
+.rotate-icon{font-size:3.2rem;margin-bottom:10px}
+.rotate-title{font-family:'Suez One',serif;font-size:1.5rem;color:var(--brown-dark);margin-bottom:8px}
+.rotate-text{font-size:1rem;color:var(--brown);line-height:1.7}
+.rotate-text strong{color:var(--brown-dark)}
+.win-emoji{font-size:3.5rem;margin-bottom:12px}
+.win-title{font-family:'Suez One',serif;font-size:1.8rem;color:var(--brown-dark);margin-bottom:8px}
+.win-msg{font-size:1.05rem;color:var(--brown);line-height:1.6;margin-bottom:18px}
+.win-btn{background:linear-gradient(135deg,var(--gold),#D4922A);color:white;border:none;padding:14px 40px;font-size:1.2rem;font-family:'Rubik',sans-serif;font-weight:700;border-radius:30px;cursor:pointer;transition:all 0.3s}
+.win-btn:hover{transform:scale(1.05)}
+.confetti-piece{position:fixed;z-index:250;pointer-events:none;animation:confettiFall linear forwards}
+@keyframes confettiFall{0%{opacity:1;transform:translateY(-20vh) rotate(0deg)}100%{opacity:0;transform:translateY(110vh) rotate(720deg)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes popIn{from{transform:scale(0.6);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes hintPulse{0%,100%{box-shadow:0 0 0 0 rgba(232,168,56,0)}50%{box-shadow:0 0 30px 15px rgba(232,168,56,0.6)}}
+/* Phone portrait */
+@media(max-width:480px){
+  .game-wrapper{padding:2px;width:100vw;max-width:none}
+  .game-header{padding:4px 8px;gap:3px;border-radius:8px;margin-bottom:2px}
+  .game-title{font-size:0.75rem}
+  .progress-bar{width:40px;height:8px}
+  .progress-text{font-size:0.65rem}
+  .progress-pill{padding:3px 8px}
+  .ctrl-btn{font-size:0.6rem;padding:3px 6px;border-radius:12px}
+  .instruction-bar{padding:4px 8px;gap:5px;min-height:30px;margin-bottom:2px;border-radius:8px}
+  .start-card{padding:18px 16px;border-radius:20px}
+  .intro-grid{grid-template-columns:1fr}
+  .instructions-card{padding:12px;gap:10px}
+  .card-icon{width:42px;height:42px;min-width:42px;font-size:1.35rem;border-radius:12px}
+  .card-text h3{font-size:0.95rem}
+  .card-text p{font-size:0.9rem}
+  .button-list{grid-template-columns:1fr 1fr}
+  .button-item{padding:10px}
+  .btn-row{gap:8px}
+  .start-btn,.secondary-btn{width:100%}
+  .instruction-text{font-size:0.72rem}
+  .play-audio-btn{width:26px;height:26px;min-width:26px;font-size:0.8rem;border-width:2px}
+  .magnifier{width:90px;height:90px}
+  .fact-bubble-marker{width:18px;height:18px;font-size:10px}
+  .image-container{border-width:2px;border-radius:8px}
+
+  .rotate-card{padding:22px 18px;border-radius:22px}
+  .rotate-icon{font-size:2.8rem}
+  .rotate-title{font-size:1.2rem}
+  .rotate-text{font-size:0.96rem}
+}
+/* Phone landscape & small tablets */
+@media(min-width:481px) and (max-width:768px){
+  .game-wrapper{padding:4px;width:98vw;max-width:none}
+  .game-header{padding:5px 10px;gap:4px}
+  .game-title{font-size:0.85rem}
+  .progress-bar{width:50px}
+  .progress-text{font-size:0.7rem}
+  .ctrl-btn{font-size:0.7rem;padding:4px 8px}
+  .instruction-bar{padding:5px 10px;min-height:34px;margin-bottom:3px}
+  .play-audio-btn{width:30px;height:30px;min-width:30px;font-size:0.9rem}
+  .magnifier{width:110px;height:110px}
+  .fact-bubble-marker{width:22px;height:22px;font-size:12px}
+  .intro-grid{grid-template-columns:1fr}
+  .button-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* Tablet & desktop */
+@media(min-width:769px){
+  .game-header{padding:8px 14px;gap:8px}
+  .game-title{font-size:1.1rem}
+  .progress-bar{width:80px}
+  .ctrl-btn{font-size:0.85rem;padding:6px 14px}
+  .instruction-bar{padding:8px 14px;min-height:42px}
+  .play-audio-btn{width:36px;height:36px;min-width:36px;font-size:1.1rem}
+  .intro-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+</style>
+</head>
+<body>
+<div class="game-wrapper">
+  <div class="game-header">
+    <span class="game-title">🏺 עבדים היינו במצרים</span>
+    <div class="header-controls">
+      <div class="progress-pill">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-text" id="progressText">רמה 1 • 0 / 9</span>
+      </div>
+      <button class="ctrl-btn hint-btn" id="hintBtn" onclick="giveHint()">💡 רמז</button>
+      <button class="ctrl-btn info-btn" id="infoBtn" onclick="openInstructions()">ℹ️ הוראות</button>
+      <button class="ctrl-btn mag-btn" id="magBtn" onclick="toggleMagnifier()">🔍</button>
+    </div>
+  </div>
+  <div class="instruction-bar" id="instructionBar">
+    <button class="play-audio-btn" id="playBtn" onclick="replayAudio()">🔊</button>
+    <span class="instruction-text" id="instructionText">קודם שומעים, אחר כך מחפשים ולוחצים.</span>
+  </div>
+  <div class="image-container" id="imageContainer">
+    <img id="gameImg" alt="סצנת מצרים">
+    <div class="magnifier" id="magnifier"></div>
+  </div>
+</div>
+<div class="start-overlay" id="startOverlay">
+  <div class="start-card">
+    <div class="start-title">איך משחקים?</div>
+    <div class="start-subtitle">קודם שומעים את ההוראות. אחר כך בוחרים רמה. ברמה 1 שומעים שם מדויק. ברמה 2 שומעים תיאור.</div>
+
+    <div class="voice-controls">
+      <button class="voice-btn active" id="autoReadBtn" onclick="toggleAutoRead()">🔊 הקראה אוטומטית: פועלת</button>
+      <button class="voice-btn" onclick="playInstructionsNarration(true)">🎙️ לשמוע שוב</button>
+    </div>
+
+    <div class="intro-grid">
+      <div class="instructions-card">
+        <div class="card-icon">1️⃣</div>
+        <div class="card-text">
+          <h3>קודם שומעים</h3>
+          <p>לוחצים על 🔊 או מחכים להקלטה, ושומעים מה צריך למצוא.</p>
+        </div>
+      </div>
+      <div class="instructions-card">
+        <div class="card-icon">2️⃣</div>
+        <div class="card-text">
+          <h3>אחר כך מחפשים</h3>
+          <p>מסתכלים טוב על התמונה ומחפשים את הדבר שהתבקש.</p>
+        </div>
+      </div>
+      <div class="instructions-card">
+        <div class="card-icon">3️⃣</div>
+        <div class="card-text">
+          <h3>לוחצים</h3>
+          <p>אם צדקתם תקבלו ✓ ותעברו למשימה הבאה. אם לא, מנסים שוב.</p>
+        </div>
+      </div>
+      <div class="instructions-card">
+        <div class="card-icon">4️⃣</div>
+        <div class="card-text">
+          <h3>מבקשים עזרה</h3>
+          <p>אם קשה, לוחצים על 💡 לרמז או על 🔍 כדי לראות מקרוב.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="button-guide">
+      <h3>הכפתורים במשחק</h3>
+      <div class="button-list">
+        <div class="button-item"><strong>🔊</strong><span>שומעים שוב את המשימה</span></div>
+        <div class="button-item"><strong>💡</strong><span>מקבלים רמז קטן או הבהוב</span></div>
+        <div class="button-item"><strong>🔍</strong><span>מגדילים את התמונה</span></div>
+        <div class="button-item"><strong>ℹ️</strong><span>פותחים שוב את ההוראות</span></div>
+      </div>
+    </div>
+
+    <div class="helper-note">אחרי ההוראות בוחרים רמה 1 או רמה 2. אפשר גם ללחוץ על בועות הדיבור שבתמונה כדי לפתוח מידע נוסף.</div>
+
+    <div class="credit-box">
+      <h3>קרדיטים</h3>
+      <p>המשחק נבנה מתוך רעיון, הנחיות, התאמות והקלטות של <strong>מיכל ערמון</strong>.</p>
+      <p>האיור הראשי נוצר על ידי <strong>NANO BANA2</strong> באמצעות <strong>Gemini</strong>.</p>
+      <p>הקוד נכתב בסיוע <strong>ChatGPT</strong> ו-<strong>Claude</strong>.</p>
+      <p>מצגות וסרטוני ההעשרה נוצרו בעזרת <strong>NotebookLM</strong>, על בסיס מקורות מידע חיצוניים המפורטים ברשימת המקורות.</p>
+      <p>חלק מהקישורים במשחק מובילים לתכנים חיצוניים שנוצרו על ידי יוצרים אחרים.</p>
+    </div>
+
+    <div class="btn-row">
+      <button class="start-btn" id="level1Btn" onclick="startLevel(1)">רמה 1</button>
+      <button class="start-btn" id="level2Btn" onclick="startLevel(2)">רמה 2</button>
+      <button class="secondary-btn" id="secondaryInstructionsBtn" onclick="closeInstructions()" style="display:none">חזרה למשחק</button>
+    </div>
+  </div>
+</div>
+<div class="popup-overlay" id="factPopup">
+  <div class="popup">
+    <div class="popup-emoji" id="factEmoji">📚</div>
+    <div class="popup-title" id="factTitle"></div>
+    <div class="popup-desc" id="factDesc"></div>
+    <a class="fact-link" id="factLink" href="#" target="_blank">🔗 ללמוד עוד!</a><br>
+    <button class="fact-audio-btn" id="factAudioBtn" type="button" onclick="replayFactAudio()">🔊 לשמוע שוב</button><br>
+    <button class="popup-close" onclick="closeFactPopup()">חזרה למשחק</button>
+  </div>
+</div>
+<div class="win-overlay" id="winOverlay">
+  <div class="win-card">
+    <div class="win-emoji">🎉🏆🎉</div>
+    <div class="win-title">כל הכבוד!</div>
+    <div class="win-msg">מצאתם את כל הפריטים בתמונה!<br>עכשיו אתם מכירים את החיים במצרים העתיקה.</div>
+    <button class="win-btn" id="winBtn" onclick="continueAfterWin()">🔄 שחקו שוב!</button>
+  </div>
+</div>
+<script>
+
+function shouldForceLandscape(){ return false; }
+function updateRotateOverlay(){}
+
+// Dynamic sizing: use much more of the screen width
+function sizeGame(){
+  const wrapper=document.querySelector('.game-wrapper');
+  const vw=window.innerWidth;
+  if(vw<=768){
+    wrapper.style.width=Math.max(vw-8, 320)+'px';
+    wrapper.style.maxWidth='none';
+  }else{
+    wrapper.style.width=Math.min(vw-24, 1400)+'px';
+    wrapper.style.maxWidth='1400px';
+  }
+}
+window.addEventListener('resize',()=>{sizeGame();});
+window.addEventListener('orientationchange',()=>setTimeout(()=>{sizeGame();},120));
+document.addEventListener('DOMContentLoaded',()=>{sizeGame();});
+const IMAGE_SRC='scene.png';
+const HITMAP_SRC='data:image/png;base64,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';
+document.getElementById('gameImg').src=IMAGE_SRC;
+const TOTAL_STEPS=9;
+const steps=[
+  {audio:'SUN.mp4',audio2:'Sun2.mp4',level1:'לחצו על השמש',level2:'לחצו על הדבר שזורח בשמיים',hint:'☀️',cx:193,cy:131},
+  {audio:'CAMEL.mp4',audio2:'Camel2.mp4',level1:'לחצו על גמל',level2:'לחצו על החיה עם הדבשת',hint:'🐪',cx:670,cy:239},
+  {audio:'DUCK.mp4',audio2:'Duck2.mp4',level1:'לחצו על הברווז הרחוק',level2:'לחצו על הציפור הרחוקה ששוחה במים',hint:'🦆',cx:107,cy:370},
+  {audio:'CAT.mp4',audio2:'Cat2.mp4',level1:'לחצו על החתול האפור',level2:'לחצו על החיה האפורה שמייללת',hint:'🐱',cx:953,cy:201},
+  {audio:'FLOWER.mp4',audio2:'Flower2.mp4',level1:'לחצו על הפרח הגדול',level2:'לחצו על הצמח שפורח והוא הכי גדול בתמונה',hint:'🌸',cx:91,cy:915},
+  {audio:'BRICKS.mp4',audio2:'BRICKS2.mp4',level1:'לחצו על האיש שסוחב לבני בנייה',level2:'לחצו על האיש שסוחב משהו כבד',hint:'🧱',cx:571,cy:395},
+  {audio:'SPIDER.mp4',audio2:'Spider2.mp4',level1:'לחצו על העכביש',level2:'לחצו על החיה עם שמונה רגליים',hint:'🕷️',cx:999,cy:424},
+  {audio:'ROPE.mp4',audio2:'Rope2.mp4',level1:'לחצו על החבל שמאחורי הילדה שמשחקת בבובה',level2:'לחצו על משהו שקושרים אותו ונמצא ליד הילדים',hint:'🪢',cx:620,cy:890},
+  {audio:'YELLING.mp4',audio2:'YELLING2.mp4',level1:'לחצו על האיש שצועק',level2:'לחצו על האיש שנראה כועס',hint:'😠',cx:739,cy:497},
+];
+const facts=[
+  {emoji:'🐱',title:'חתולים קדושים',text:'המצרים האמינו שחתולים הם חיות קדושות — אסור לפגוע בהם!',audio:'חתולים-קדושים.mp4',link:'https://www.canva.com/design/DAHEUT_-Iqg/1oyYfewhli2B92EsUZMP0A/watch?utm_content=DAHEUT_-Iqg&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h5a733b0fc9',x:92.6,y:2.7},
+  {emoji:'🧱',title:'לבנים מבוץ וקש',text:'העבדים לשו בוץ וקש ביחד ומילאו תבניות — ככה הכינו לבנים! בלי קש זה נשבר מהר.',audio:'לבנים.mp4',link:'https://youtube.com/shorts/-WtqJ55k5XM',x:45.1,y:25.9},
+  {emoji:'🌊',title:'הנילוס = נהר החיים',text:'הנילוס הוא הנהר הכי ארוך בעולם! המצרים קראו לו "נהר החיים" כי בלעדיו שום דבר לא גדל.',audio:'נילוס.mp4',link:'https://www.canva.com/design/DAHETgGujMs/RK0sK7gfUcwfEwcJOD-xPw/watch?utm_content=DAHETgGujMs&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h421344ede8',x:16.1,y:41.2},
+  {emoji:'🧸',title:'ילדים שיחקו!',text:'גם ילדים במצרים העתיקה שיחקו! הם גילפו בובות מעץ ושיחקו במשחקי לוח — ממש כמו ילדים היום!',audio:'משחקים.mp4',link:'https://slpmiki.my.canva.site/the-ancient-toybox-pptx',x:82,y:65.4},
+];
+let currentStep=0,currentLevel=1,hintLevel=0,magActive=false,audioEl=null,gameStarted=false,autoReadEnabled=true,introNarrationTimeout=null,stepUtterance=null,selectedStartLevel=1;
+const ZOOM=2.5;
+const hitCanvas=document.createElement('canvas');
+hitCanvas.width=1024;hitCanvas.height=1024;
+const hitCtx=hitCanvas.getContext('2d',{willReadFrequently:true});
+const hitImg=new Image();
+hitImg.src=HITMAP_SRC;
+hitImg.onload=()=>{hitCtx.drawImage(hitImg,0,0)};
+
+// Helper: get actual image rect within container (accounting for object-fit:contain)
+function getImgRect(){
+  const c=document.getElementById('imageContainer');
+  const img=document.getElementById('gameImg');
+  const cRect=c.getBoundingClientRect();
+  const iw=img.naturalWidth, ih=img.naturalHeight;
+  const cw=cRect.width, ch=cRect.height;
+  const scale=Math.min(cw/iw, ch/ih);
+  const rw=iw*scale, rh=ih*scale;
+  const ox=(cw-rw)/2, oy=(ch-rh)/2;
+  return {ox,oy,rw,rh};
+}
+
+function buildGame(){
+  const c=document.getElementById('imageContainer');
+
+  facts.forEach(f=>{const e=document.createElement('div');e.className='fact-bubble-marker';e.dataset.fact=JSON.stringify(f);e.innerHTML='';c.appendChild(e);});
+
+  // Position fact bubbles relative to actual image
+  function positionFacts(){
+    const ir=getImgRect();
+    document.querySelectorAll('.fact-bubble-marker').forEach(el=>{
+      const f=JSON.parse(el.dataset.fact);
+      el.style.left=(ir.ox + f.x/100*ir.rw)+'px';
+      el.style.top=(ir.oy + f.y/100*ir.rh)+'px';
+    });
+  }
+  new ResizeObserver(positionFacts).observe(c);
+  setTimeout(positionFacts,100);
+
+  c.addEventListener('click',e=>{
+    if(!gameStarted)return;
+    if(!gameStarted||currentStep>=TOTAL_STEPS)return;
+    const cRect=c.getBoundingClientRect();
+    const cx=e.clientX-cRect.left,cy=e.clientY-cRect.top;
+    const ir=getImgRect();
+    // Map to 1024x1024 hitmap
+    const hx=Math.round((cx-ir.ox)/ir.rw*1024),hy=Math.round((cy-ir.oy)/ir.rh*1024);
+    if(hx<0||hx>=1024||hy<0||hy>=1024)return;
+    const p=hitCtx.getImageData(hx,hy,1,1).data;
+    const hitStep=Math.round(p[0]/28);
+    if(hitStep===currentStep+1){handleHit(cx,cy,cRect);return}
+    // If not a hit, check if clicked a fact bubble
+    const factEl=e.target.closest('.fact-bubble-marker');
+    if(factEl&&factEl.dataset.fact){
+      showFact(JSON.parse(factEl.dataset.fact));return;
+    }
+    showWrongClick(cx,cy,c);
+  });
+  updateInstructionsButtons();
+}
+
+function stopNarration(){
+  if(introNarrationTimeout){clearTimeout(introNarrationTimeout);introNarrationTimeout=null}
+  if('speechSynthesis' in window){window.speechSynthesis.cancel()}
+}
+function getInstructionsNarrationText(){
+  return 'איך משחקים? קודם שומעים את ההוראות, ואז בוחרים רמה. ברמה אחת שומעים שם מדויק. ברמה שתיים שומעים תיאור. בכל פעם שומעים משימה, מחפשים בתמונה, ולוחצים על הדבר הנכון. אפשר ללחוץ על כפתור הקול כדי לשמוע שוב. אם קשה, לוחצים על כפתור הרמז, או על זכוכית המגדלת. אפשר גם ללחוץ על בועות הדיבור שבתמונה כדי לפתוח מידע נוסף.';
+}
+function getStepText(step){
+  return currentLevel===1 ? step.level1 : step.level2;
+}
+function updateProgress(){
+  document.getElementById('progressFill').style.width=(currentStep/TOTAL_STEPS*100)+'%';
+  document.getElementById('progressText').textContent='רמה '+currentLevel+' • '+currentStep+' / '+TOTAL_STEPS;
+}
+function stopStepAudio(){
+  if(audioEl){audioEl.pause();audioEl=null}
+  if('speechSynthesis' in window){window.speechSynthesis.cancel()}
+  const b=document.getElementById('playBtn');
+  if(b)b.classList.remove('playing');
+}
+function getLevel2AudioCandidates(step){
+  const files=[];
+  const add=f=>{ if(f && !files.includes(f)) files.push(f); };
+  if(step.audio2) add(step.audio2);
+  const dot=step.audio.lastIndexOf('.');
+  const autoFile=dot===-1 ? step.audio+'2' : step.audio.slice(0,dot)+'2'+step.audio.slice(dot);
+  add(autoFile);
+  if(dot!==-1){
+    const ext=step.audio.slice(dot);
+    const base=step.audio.slice(0,dot);
+    add(base.toLowerCase()+'2'+ext);
+    add(base.charAt(0).toUpperCase()+base.slice(1).toLowerCase()+'2'+ext);
+    add(base.charAt(0).toLowerCase()+base.slice(1)+'2'+ext);
+  }
+  return files;
+}
+function playAudioFile(fileNames,fallbackSpeechText=''){
+  const candidates=Array.isArray(fileNames)?fileNames:[fileNames];
+  const b=document.getElementById('playBtn');
+  let index=0;
+  const cleanup=()=>{ if(b)b.classList.remove('playing'); };
+  const tryNext=()=>{
+    if(index>=candidates.length){
+      cleanup();
+      if(fallbackSpeechText)speakHebrew(fallbackSpeechText);
+      return;
+    }
+    const fileName=candidates[index++];
+    audioEl=new Audio(encodeURI(fileName));
+    if(b)b.classList.add('playing');
+    audioEl.onended=()=>cleanup();
+    audioEl.onerror=()=>tryNext();
+    audioEl.play().catch(()=>tryNext());
+  };
+  tryNext();
+}
+function speakHebrew(text){
+  if(!('speechSynthesis' in window))return;
+  window.speechSynthesis.cancel();
+  const utterance=new SpeechSynthesisUtterance(text);
+  utterance.lang='he-IL';
+  utterance.rate=0.92;
+  utterance.pitch=1;
+  stepUtterance=utterance;
+  const b=document.getElementById('playBtn');
+  if(b)b.classList.add('playing');
+  utterance.onend=()=>{ if(b)b.classList.remove('playing'); };
+  utterance.onerror=()=>{ if(b)b.classList.remove('playing'); };
+  setTimeout(()=>window.speechSynthesis.speak(utterance),120);
+}
+
+function playInstructionsNarration(force=false){
+  if(!('speechSynthesis' in window))return;
+  if(!force && !autoReadEnabled)return;
+  stopNarration();
+  const utterance=new SpeechSynthesisUtterance(getInstructionsNarrationText());
+  utterance.lang='he-IL';
+  utterance.rate=0.92;
+  utterance.pitch=1;
+  introNarrationTimeout=setTimeout(()=>{
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  },180);
+}
+function toggleAutoRead(){
+  autoReadEnabled=!autoReadEnabled;
+  const btn=document.getElementById('autoReadBtn');
+  if(autoReadEnabled){
+    btn.textContent='🔊 הקראה אוטומטית: פועלת';
+    btn.classList.add('active');
+    playInstructionsNarration(true);
+  }else{
+    btn.textContent='🔇 הקראה אוטומטית: כבויה';
+    btn.classList.remove('active');
+    stopNarration();
+  }
+}
+
+function updateInstructionsButtons(){
+  const level1Btn=document.getElementById('level1Btn');
+  const level2Btn=document.getElementById('level2Btn');
+  const secondary=document.getElementById('secondaryInstructionsBtn');
+  if(gameStarted){
+    level1Btn.style.display='none';
+    level2Btn.style.display='none';
+    secondary.style.display='inline-block';
+  }else{
+    level1Btn.style.display='inline-block';
+    level2Btn.style.display='inline-block';
+    secondary.style.display='none';
+  }
+}
+function openInstructions(){
+  updateInstructionsButtons();
+  stopStepAudio();
+  stopFactAudio();
+  document.getElementById('startOverlay').classList.remove('hidden');
+  if(!shouldForceLandscape()) playInstructionsNarration();
+}
+function closeInstructions(){
+  if(!gameStarted)return;
+  stopNarration();
+  document.getElementById('startOverlay').classList.add('hidden');
+}
+function startLevel(level){
+  stopNarration();
+  stopStepAudio();
+  stopFactAudio();
+  if(shouldForceLandscape()){
+    updateRotateOverlay();
+    return;
+  }
+  gameStarted=true;
+  selectedStartLevel=level;
+  currentLevel=level;
+  currentStep=0;
+  updateProgress();
+  document.getElementById('startOverlay').classList.add('hidden');
+  updateInstructionsButtons();
+  activateStep(0);
+}
+function startGame(){
+  startLevel(1);
+}
+function activateStep(i){
+  currentStep=i;hintLevel=0;
+  document.getElementById('hintBtn').textContent='💡 רמז';
+  document.getElementById('hintBtn').disabled=false;
+  document.getElementById('instructionBar').classList.remove('success');
+  document.getElementById('instructionText').textContent=getStepText(steps[i]);
+  updateProgress();
+  playStepAudio(i);
+}
+function playStepAudio(i){
+  stopStepAudio();
+  const step=steps[i];
+  if(currentLevel===1){
+    playAudioFile(step.audio);
+  }else{
+    playAudioFile(getLevel2AudioCandidates(step),step.level2);
+  }
+}
+function replayAudio(){if(gameStarted&&currentStep<TOTAL_STEPS)playStepAudio(currentStep)}
+function handleHit(x,y){
+  const c=document.getElementById('imageContainer');
+  const m=document.createElement('div');m.className='found-marker';
+  m.style.left=(x-20)+'px';m.style.top=(y-20)+'px';
+  m.innerHTML='<div class="check-circle">✓</div>';c.appendChild(m);
+  stepComplete();
+}
+function stepComplete(){
+  document.getElementById('instructionBar').classList.add('success');
+  document.getElementById('instructionText').textContent='מצאתם! יופי!';
+  const done=currentStep+1;
+  document.getElementById('progressFill').style.width=(done/TOTAL_STEPS*100)+'%';
+  document.getElementById('progressText').textContent='רמה '+currentLevel+' • '+done+' / '+TOTAL_STEPS;
+  if(done>=TOTAL_STEPS){setTimeout(showWin,1200);return}
+  setTimeout(()=>activateStep(currentStep+1),1500);
+}
+function showWrongClick(x,y,c){
+  const f=document.createElement('div');f.className='wrong-flash';
+  f.style.left=(x-20)+'px';f.style.top=(y-20)+'px';
+  c.appendChild(f);setTimeout(()=>f.remove(),600);
+}
+function giveHint(){
+  if(!gameStarted||currentStep>=TOTAL_STEPS)return;
+  const s=steps[currentStep];
+  if(currentLevel===2){
+    if(hintLevel===0){
+      hintLevel=1;
+      document.getElementById('instructionText').textContent='רמז: '+s.hint;
+      document.getElementById('hintBtn').textContent='💡 רמז 2';
+      return;
+    }
+    if(hintLevel===1){
+      hintLevel=2;
+      document.getElementById('instructionText').textContent='רמז: שומעים מה זה';
+      document.getElementById('hintBtn').textContent='💡 רמז 3';
+      stopStepAudio();
+      playAudioFile(s.audio);
+      return;
+    }
+    if(hintLevel===2){
+      hintLevel=3;
+      document.getElementById('hintBtn').disabled=true;
+      document.getElementById('hintBtn').textContent='💡';
+      const c=document.getElementById('imageContainer');
+      const ir=getImgRect();
+      const dx=ir.ox+s.cx/1024*ir.rw,dy=ir.oy+s.cy/1024*ir.rh;
+      const g=document.createElement('div');g.className='hint-glow';
+      g.style.left=(dx-30)+'px';g.style.top=(dy-30)+'px';g.style.width='60px';g.style.height='60px';
+      c.appendChild(g);setTimeout(()=>g.remove(),5000);
+      return;
+    }
+    return;
+  }
+  if(hintLevel===0){
+    hintLevel=1;
+    document.getElementById('instructionText').textContent=s.level1+'  '+s.hint;
+    document.getElementById('hintBtn').textContent='💡 רמז 2';
+  }
+  else if(hintLevel===1){
+    hintLevel=2;document.getElementById('hintBtn').disabled=true;document.getElementById('hintBtn').textContent='💡';
+    const c=document.getElementById('imageContainer');
+    const ir=getImgRect();
+    const dx=ir.ox+s.cx/1024*ir.rw,dy=ir.oy+s.cy/1024*ir.rh;
+    const g=document.createElement('div');g.className='hint-glow';
+    g.style.left=(dx-30)+'px';g.style.top=(dy-30)+'px';g.style.width='60px';g.style.height='60px';
+    c.appendChild(g);setTimeout(()=>g.remove(),5000);
+  }
+}
+let factAudioEl=null,currentFact=null;
+function stopFactAudio(){
+  if(factAudioEl){
+    factAudioEl.pause();
+    factAudioEl=null;
+  }
+  const btn=document.getElementById('factAudioBtn');
+  if(btn)btn.classList.remove('playing');
+}
+function playFactAudio(fileName,fallbackText=''){
+  stopFactAudio();
+  if(!fileName){
+    if(fallbackText)speakHebrew(fallbackText);
+    return;
+  }
+  const btn=document.getElementById('factAudioBtn');
+  factAudioEl=new Audio(encodeURI(fileName));
+  if(btn)btn.classList.add('playing');
+  factAudioEl.onended=()=>{ if(btn)btn.classList.remove('playing'); };
+  factAudioEl.onerror=()=>{
+    if(btn)btn.classList.remove('playing');
+    if(fallbackText)speakHebrew(fallbackText);
+  };
+  factAudioEl.play().catch(()=>{
+    if(btn)btn.classList.remove('playing');
+    if(fallbackText)speakHebrew(fallbackText);
+  });
+}
+function replayFactAudio(){
+  if(!currentFact)return;
+  playFactAudio(currentFact.audio,currentFact.text);
+}
+function showFact(f){
+  currentFact=f;
+  stopStepAudio();
+  document.getElementById('factEmoji').textContent=f.emoji;
+  document.getElementById('factTitle').textContent=f.title;
+  document.getElementById('factDesc').textContent=f.text;
+  document.getElementById('factLink').href=f.link;
+  document.getElementById('factPopup').classList.add('active');
+  playFactAudio(f.audio,f.text);
+}
+function closeFactPopup(){
+  stopFactAudio();
+  document.getElementById('factPopup').classList.remove('active');
+}
+function toggleMagnifier(){magActive=!magActive;document.getElementById('magBtn').classList.toggle('active',magActive);document.getElementById('imageContainer').classList.toggle('mag-active',magActive);if(!magActive)document.getElementById('magnifier').classList.remove('visible')}
+(function(){
+  const c=document.getElementById('imageContainer'),m=document.getElementById('magnifier');
+  function u(cx,cy){if(!magActive)return;const r=c.getBoundingClientRect(),x=cx-r.left,y=cy-r.top;if(x<0||y<0||x>r.width||y>r.height){m.classList.remove('visible');return}m.classList.add('visible');const ms=m.offsetWidth;m.style.left=(x-ms/2)+'px';m.style.top=(y-ms/2)+'px';const ir=getImgRect();const bw=ir.rw*ZOOM,bh=ir.rh*ZOOM;const imgX=x-ir.ox,imgY=y-ir.oy;m.style.backgroundImage='url('+IMAGE_SRC+')';m.style.backgroundSize=bw+'px '+bh+'px';m.style.backgroundPosition=-(imgX*ZOOM-ms/2)+'px '+-(imgY*ZOOM-ms/2)+'px'}
+  c.addEventListener('mousemove',e=>u(e.clientX,e.clientY));
+  c.addEventListener('mouseleave',()=>m.classList.remove('visible'));
+  c.addEventListener('touchmove',e=>{if(!magActive)return;e.preventDefault();u(e.touches[0].clientX,e.touches[0].clientY)},{passive:false});
+  c.addEventListener('touchstart',e=>{if(!magActive)return;u(e.touches[0].clientX,e.touches[0].clientY)},{passive:true});
+  c.addEventListener('touchend',()=>m.classList.remove('visible'));
+})();
+function showWin(){
+  const overlay=document.getElementById('winOverlay');
+  const title=document.querySelector('.win-title');
+  const msg=document.querySelector('.win-msg');
+  const btn=document.getElementById('winBtn');
+  overlay.classList.add('active');
+  if(currentLevel===1){
+    title.textContent='כל הכבוד!';
+    msg.innerHTML='סיימתם את רמה 1!<br>עכשיו אפשר לחזור לבחירת רמה ולבחור רמה 2, או לשחק שוב.';
+    btn.textContent='🔄 חזרה לבחירת רמה';
+    return;
+  }
+  title.textContent='כל הכבוד!';
+  msg.innerHTML='סיימתם את הרמה שבחרתם!<br>עכשיו אפשר לשחק שוב או לבחור רמה אחרת.';
+  btn.textContent='🔄 שחקו שוב!';
+  const cl=['#E8A838','#D94E4E','#4CAF50','#3A8CB5','#FF6B9D','#FFD700'];
+  for(let i=0;i<50;i++){setTimeout(()=>{const c=document.createElement('div');c.className='confetti-piece';c.style.left=Math.random()*100+'vw';c.style.background=cl[Math.floor(Math.random()*cl.length)];c.style.borderRadius=Math.random()>0.5?'50%':'2px';c.style.width=(6+Math.random()*8)+'px';c.style.height=(6+Math.random()*8)+'px';c.style.animationDuration=(2+Math.random()*3)+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),5000)},i*50)}
+}
+function continueAfterWin(){
+  document.getElementById('winOverlay').classList.remove('active');
+  restartGame();
+}
+function restartGame(){
+  document.getElementById('winOverlay').classList.remove('active');
+  document.getElementById('progressFill').style.width='0%';
+  currentLevel=1;
+  document.querySelectorAll('.found-marker,.hint-glow').forEach(e=>e.remove());
+  gameStarted=false;
+  currentStep=0;
+  hintLevel=0;
+  stopStepAudio();
+  document.getElementById('instructionBar').classList.remove('success');
+  document.getElementById('instructionText').textContent='קודם שומעים, אחר כך מחפשים ולוחצים.';
+  updateProgress();
+  openInstructions();
+}
+buildGame();
+updateProgress();
+updateRotateOverlay();
+window.addEventListener('beforeunload',()=>{stopNarration();stopStepAudio();});
+window.addEventListener('pagehide',()=>{stopNarration();stopStepAudio();});
+setTimeout(()=>{ if(!shouldForceLandscape() && !gameStarted && !document.getElementById('startOverlay').classList.contains('hidden')) playInstructionsNarration(); }, 450);
+</script>
+</body>
+</html>
